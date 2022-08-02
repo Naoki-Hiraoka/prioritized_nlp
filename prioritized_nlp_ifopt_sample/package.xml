@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>prioritized_nlp_ifopt_sample</name>
+  <version>0.0.0</version>
+  <description>The prioritized_nlp_ifopt_sample package</description>
+
+  <maintainer email="hiraoka@todo.todo">hiraoka</maintainer>
+
+
+  <author email="hiraoka@tjsk.imi.i.u-tokyo.ac.jp">Naoki-Hiraoka</author>
+  <maintainer email="hiraoka@tjsk.imi.i.u-tokyo.ac.jp">Naoki-Hiraoka</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>prioritized_nlp_ifopt</depend>
+</package>
