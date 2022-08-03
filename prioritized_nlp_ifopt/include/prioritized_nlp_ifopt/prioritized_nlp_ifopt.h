@@ -14,6 +14,7 @@ namespace prioritized_nlp_ifopt{
   };
 
   // 0番目のtaskは解かない
+  // 小規模な問題に対してはあまり速くない
   bool solve(const std::vector<std::shared_ptr<Task> >& tasks, int dim, Eigen::VectorXd& solution);
 };
 
