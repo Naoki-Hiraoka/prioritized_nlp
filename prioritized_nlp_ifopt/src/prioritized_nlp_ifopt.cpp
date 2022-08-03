@@ -132,30 +132,48 @@ namespace prioritized_nlp_ifopt{
       }
     }
 
+    std::vector<Eigen::VectorXd> lowerBoundOrg;
+    std::vector<Eigen::VectorXd> upperBoundOrg;
+    for(int i=0;i<tasks.size();i++){
+      lowerBoundOrg.push_back(tasks[i]->lowerBound);
+      upperBoundOrg.push_back(tasks[i]->upperBound);
+    }
+
     Eigen::VectorXd x = solution;
     std::vector<std::shared_ptr<Task> > constraints{tasks[0]};
     double constraints_dim = tasks[0]->lowerBound.rows();
+
+    ifopt::IpoptSolver ipopt;
+    ipopt.SetOption("linear_solver", "mumps");
+    ipopt.SetOption("jacobian_approximation", "exact");
+    ipopt.SetOption("print_level", 0); // supress log. default 5. 0~12
+    ipopt.SetOption("nlp_lower_bound_inf", -1e10); // この値より大きいboundはno boundとみなすことで高速化に寄与
+    ipopt.SetOption("nlp_upper_bound_inf", 1e10); // この値より大きいboundはno boundとみなすことで高速化に寄与
+    ipopt.SetOption("warm_start_init_point", "yes"); // 高速化に寄与
+
     for(int i=1;i<tasks.size();i++){
       ifopt::Problem nlp;
       nlp.AddVariableSet(std::make_shared<MyVariables>(dim,x));
       nlp.AddConstraintSet(std::make_shared<MyConstraint>(constraints_dim,"constraint0",constraints));
       nlp.AddCostSet(std::make_shared<MyCost>("cost0",std::vector<std::shared_ptr<Task> >{tasks[i]}));
-      ifopt::IpoptSolver ipopt;
-      ipopt.SetOption("linear_solver", "mumps");
-      ipopt.SetOption("jacobian_approximation", "exact");
-      ipopt.SetOption("print_level", 0); // supress log
-      ipopt.SetOption("nlp_lower_bound_inf", -1e10);
-      ipopt.SetOption("nlp_upper_bound_inf", 1e10);
-      //ipopt.SetOption("tol", 1e-4);
       ipopt.Solve(nlp);
       if(ipopt.GetReturnStatus() != 0){
         return false;
       }
       x = nlp.GetOptVariables()->GetValues();
       constraints_dim += tasks[i]->lowerBound.rows();
+      Eigen::VectorXd value = tasks[i]->getValue(x);
+      for(int j=0;j<value.rows();j++){
+        if(value[j]>tasks[i]->upperBound[j]) tasks[i]->upperBound[j] = value[j];
+        else if(value[j]<tasks[i]->lowerBound[j]) tasks[i]->lowerBound[j] = value[j];
+      }
       constraints.push_back(tasks[i]);
     }
 
+    for(int i=0;i<tasks.size();i++){
+      tasks[i]->lowerBound = lowerBoundOrg[i];
+      tasks[i]->upperBound = upperBoundOrg[i];
+    }
     solution = x;
     return true;
   }
